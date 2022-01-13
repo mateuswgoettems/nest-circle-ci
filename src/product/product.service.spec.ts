@@ -1,4 +1,6 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { ProductRepository } from './product.repository';
 import { ProductService } from './product.service';
 
 describe('ProductService', () => {
@@ -13,13 +15,68 @@ describe('ProductService', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [ProductService],
+      providers: [ProductService,
+        {
+          provide: ProductRepository,
+          useFactory: mockProductRepository
+        }],
     }).compile();
 
-    service = module.get<ProductService>(ProductService);
+    productService = await module.get<ProductService>(ProductService);
+    productRepository = await module.get<ProductRepository>(ProductRepository);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  describe('createProduct', async () => {
+    it('should save a product in the database', async () => {
+      productRepository.createProduct.mockResolvedValue('someProduct');
+      expect(productRepository.createProduct).not.toHaveBeenCalled();
+      const createProductDTO = {
+        name: 'sampleName',
+        description: 'sample description',
+        price: 'sample price'
+      }
+      const result = await productService.createProduct(createProductDTO);
+      expect(productRepository.createProduct).toHaveBeenCalledWith(createProductDTO);
+      expect(result).toEqual('someProduct')
+    })
+  })
+
+  describe('getProducts', () => {
+    it('should get all products', async () => {
+      productRepository.find.mockResolvedValue('someProducts');
+
+      expect(productRepository.find).not.toHaveBeenCalled();
+      const result = await productService.getProducts();
+      expect(productRepository.find).toHaveBeenCalled()
+      expect(result).toEqual('someProducts');
+    })
+  });
+
+  describe('getProduct', () => {
+    it('should retrieve a product with an ID', async () => {
+      const mockProduct = {
+        name: 'Test Name',
+        description: 'Test Description',
+        price: 'Test Price'
+      };
+      productRepository.findOne.mockResolvedValue(mockProduct);
+      const result = await productService.getProduct(1);
+      expect(result).toEqual(mockProduct);
+      expect(productRepository.findOne).toHaveBeenLastCalledWith(1)
+    })
+
+    it('throws an error as a product is not found', () => {
+      productRepository.findOne.mockResolvedValue(null);
+      expect(productService.getProduct(1)).rejects.toThrow(NotFoundException)
+    })
+  })
+
+  describe('deleteProduct', () => {
+    it('should delete product', async () => {
+      productRepository.delete.mockResolvedValue(1);
+      expect(productRepository.delete).not.toHaveBeenCalled();
+      await productService.deleteProduct(1);
+      expect(productRepository.delete).toHaveBeenCalledWith(1);
+    });
   });
 });
