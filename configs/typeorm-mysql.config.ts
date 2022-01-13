@@ -17,6 +17,6 @@ export const mysqlConfig: TypeOrmModuleOptions= {
     username: env.DB_USER,
     password: env.DB_PASS,
     database: env.DATABASE,
-    entities: [join(__dirname, '**', '*.entity.{ts,js}')],
+    entities: [join(__dirname, '..','**', '*.entity.{ts,js}')],
     synchronize: true
 }

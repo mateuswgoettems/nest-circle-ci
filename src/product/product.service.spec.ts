@@ -26,7 +26,7 @@ describe('ProductService', () => {
     productRepository = await module.get<ProductRepository>(ProductRepository);
   });
 
-  describe('createProduct', async () => {
+  describe('createProduct', () => {
     it('should save a product in the database', async () => {
       productRepository.createProduct.mockResolvedValue('someProduct');
       expect(productRepository.createProduct).not.toHaveBeenCalled();
